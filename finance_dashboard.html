@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#11151d">
+<title>Личные финансы — панель управления</title>
+<style>
+:root{--bg:#0d1118;--panel:#151c27;--panel2:#1b2431;--line:#293445;--text:#edf2f8;--muted:#91a0b4;--green:#42c995;--blue:#6da8ff;--orange:#f2b766;--red:#ff7777;--purple:#b49aff;--radius:16px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1240px;margin:auto;padding:22px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#42c995,#477dd5);display:grid;place-items:center;color:#08131a;font-weight:900;font-size:20px}.brand h1{font-size:19px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:9px 13px}.btn.primary{background:var(--green);color:#071811;border-color:var(--green);font-weight:700}.btn.danger{color:var(--red)}
+.tabs{display:flex;gap:7px;overflow:auto;padding-bottom:12px;margin-bottom:14px}.tab{white-space:nowrap;border:1px solid var(--line);background:transparent;color:var(--muted);padding:9px 13px;border-radius:10px}.tab.active{background:var(--panel2);color:var(--text);border-color:#52627a}
+.view{display:none}.view.active{display:block}.grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:17px;min-width:0}.card h2,.card h3{margin:0 0 13px}.card h2{font-size:17px}.card h3{font-size:14px;color:#dce5f0}.eyebrow{color:var(--muted);font-size:12px;margin-bottom:7px}.big{font-size:clamp(22px,3vw,30px);font-weight:750;letter-spacing:-.6px}.muted{color:var(--muted)}.green{color:var(--green)}.blue{color:var(--blue)}.orange{color:var(--orange)}.red{color:var(--red)}.purple{color:var(--purple)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.stack{display:flex;flex-direction:column;gap:10px}.divider{height:1px;background:var(--line);margin:13px 0}.progress{height:9px;background:#273243;border-radius:20px;overflow:hidden;margin:10px 0}.progress>span{height:100%;display:block;background:var(--green);border-radius:20px}.progress.bluebar>span{background:var(--blue)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:600}td:last-child,th:last-child{text-align:right}.table-wrap{overflow:auto}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted)}input,select,textarea{width:100%;background:#0f151e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--blue)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.pill{font-size:11px;border-radius:20px;padding:4px 8px;background:#243347;color:#b9c9dd}.notice{border:1px solid #66502d;background:#2a241a;color:#f4d4a0;border-radius:11px;padding:11px 13px;font-size:12px;margin-bottom:14px}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.item small{display:block;color:var(--muted);margin-top:3px}
+.empty{color:var(--muted);font-size:13px;padding:14px 0}.positive{color:var(--green)}.negative{color:var(--red)}
+canvas{width:100%;height:210px;display:block}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:25px 0 8px}
+.modal-back{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px;z-index:5}.modal-back.open{display:flex}.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;width:min(600px,100%);max-height:90vh;overflow:auto}.modal h2{margin-top:0}
+@media(max-width:850px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:1fr 1fr}}
+@media(max-width:580px){.app{padding:13px}.stats,.two,.three{grid-template-columns:1fr}.header-actions .btn{padding:8px}.brand h1{font-size:16px}.card{padding:14px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}th,td{padding:9px 6px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand"><div class="mark">₽</div><div><h1>Финансовая система</h1><p>Личная панель управления капиталом</p></div></div>
+ <div class="header-actions">
+  <button class="btn" id="exportBtn">Экспорт данных</button>
+  <button class="btn" id="importBtn">Импорт</button>
+  <input type="file" id="importFile" accept="application/json" hidden>
+ </div>
+</header>
+<nav class="tabs" id="tabs">
+ <button class="tab active" data-view="dashboard">Обзор</button>
+ <button class="tab" data-view="accounts">Счета</button>
+ <button class="tab" data-view="operations">Операции</button>
+ <button class="tab" data-view="payments">Обязательные платежи</button>
+ <button class="tab" data-view="goals">Цели</button>
+ <button class="tab" data-view="investments">Инвестиции</button>
+ <button class="tab" data-view="business">Фотопечать</button>
+ <button class="tab" data-view="credit">Кредитная схема</button>
+ <button class="tab" data-view="settings">Настройки</button>
+</nav>
+
+<div class="notice">Первая версия работает локально в этом браузере. Данные не отправляются на GitHub Pages. Регулярно скачивай резервную копию через кнопку «Экспорт данных».</div>
+
+<section class="view active" id="dashboard">
+ <div class="grid stats">
+  <div class="card"><div class="eyebrow">Чистый капитал (все активы)</div><div class="big" id="netWorth">—</div><div class="muted" id="netWorthNote">Активы минус долги</div></div>
+  <div class="card"><div class="eyebrow">Личные активы без бизнес-кассы</div><div class="big" id="personalAssets">—</div><div class="muted">Без семейного счёта</div></div>
+  <div class="card"><div class="eyebrow">Долг по кредитной карте</div><div class="big orange" id="debtTotal">—</div><div class="muted">Учитывается в чистом капитале</div></div>
+  <div class="card"><div class="eyebrow">Новые накопления к цели</div><div class="big green" id="goalProgress">—</div><div class="muted" id="goalProgressNote">Только новые взносы</div></div>
+ </div>
+ <div class="grid two" style="margin-top:14px">
+  <div class="card"><h2>Цель: 1 000 000 ₽ за 36 месяцев</h2><div class="row"><span class="muted">Прогресс новых накоплений</span><b id="goalPct">0%</b></div><div class="progress"><span id="goalBar" style="width:0%"></span></div><div class="row"><span class="muted">Осталось накопить</span><b id="goalRemaining">1 000 000 ₽</b></div><div class="divider"></div><div class="row"><span class="muted">Средний взнос для цели</span><b>27 778 ₽/мес.</b></div><div class="row"><span class="muted">Плановый личный остаток</span><b id="monthlyRemainder">8 252 ₽</b></div></div>
+  <div class="card"><h2>Финансовая подушка</h2><div class="row"><span class="muted">Цель</span><b>200 000 ₽</b></div><div class="big blue" id="reserveCurrent">8 000 ₽</div><div class="progress bluebar"><span id="reserveBar" style="width:4%"></span></div><div class="row"><span class="muted">До цели</span><b id="reserveRemaining">192 000 ₽</b></div><small class="muted">Считаются только собственные деньги на накопительном счёте Яндекса. Заёмные 100 000 ₽ исключены.</small></div>
+ </div>
+ <div class="grid two" style="margin-top:14px">
+  <div class="card"><h2>План месяца</h2><div id="budgetSummary"></div><div class="divider"></div><div class="row"><span class="muted">Доходы по плану</span><b>134 000 ₽</b></div><div class="row"><span class="muted">Плановый остаток</span><b class="green" id="budgetRemainder">8 252 ₽</b></div></div>
+  <div class="card"><h2>Последние операции</h2><div id="recentOperations" class="stack"></div><button class="btn" style="margin-top:10px" onclick="showView('operations')">Все операции</button></div>
+ </div>
+</section>
+
+<section class="view" id="accounts">
+ <div class="row" style="margin-bottom:12px"><h2>Банковские счета и наличные</h2><button class="btn primary" onclick="openAccountModal()">Добавить счёт</button></div>
+ <div class="card"><div class="table-wrap"><table><thead><tr><th>Счёт</th><th>Тип</th><th>Баланс</th><th></th></tr></thead><tbody id="accountsTable"></tbody></table></div></div>
+ <div class="grid two" style="margin-top:14px">
+  <div class="card"><h3>Сводка активов</h3><div id="assetSummary"></div></div>
+  <div class="card"><h3>Как читать остатки</h3><p class="muted">Баланс накопительного счёта Яндекса включает 100 000 ₽, полученные с кредитной карты. Эти деньги остаются активом на счёте, но одновременно отражается кредитный долг. Поэтому они не увеличивают чистый капитал.</p><p class="muted">Наличные фотопечати учитываются отдельно от личных денег.</p></div>
+ </div>
+</section>
+
+<section class="view" id="operations">
+ <div class="row" style="margin-bottom:12px"><h2>Доходы и расходы</h2><button class="btn primary" onclick="openOperationModal()">Добавить операцию</button></div>
+ <div class="grid stats">
+  <div class="card"><div class="eyebrow">Доходы за выбранный месяц</div><div class="big green" id="monthIncome">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Расходы за выбранный месяц</div><div class="big red" id="monthExpense">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Чистый поток</div><div class="big" id="monthNet">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Операций</div><div class="big" id="monthCount">0</div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><div class="row"><h3>История операций</h3><input type="month" id="monthFilter" style="max-width:180px"></div><div class="table-wrap"><table><thead><tr><th>Дата</th><th>Операция</th><th>Категория</th><th>Счёт</th><th>Сумма</th><th></th></tr></thead><tbody id="operationsTable"></tbody></table></div></div>
+ <div class="card" style="margin-top:14px"><h3>Правила учёта</h3><p class="muted">Переводы между собственными счетами оформляются отдельным типом «Перевод» и не меняют капитал. Перевод на семейный счёт отражается как личный расход/взнос и отдельно как семейное поступление в дальнейшем учёте. В первой версии семейный счёт не включён в личные активы.</p></div>
+</section>
+
+<section class="view" id="payments">
+ <div class="grid two">
+  <div class="card"><div class="eyebrow">Резерв на обязательные платежи в этом месяце</div><div class="big green" id="paymentsTarget">66 248 ₽</div><p class="muted">План на месяц: аренда, интернет, тариф и подписка. Перевод с основной карты на резервную карту не считается расходом.</p><div class="divider"></div><div class="row"><span class="muted">Сейчас на резервной карте</span><b id="paymentsBalance">0 ₽</b></div><div class="row"><span class="muted">Осталось зарезервировать</span><b id="paymentsToFund">66 248 ₽</b></div><div class="progress"><span id="paymentsBar" style="width:0%"></span></div>
+   <div class="field"><label>С какой карты перевести деньги (обычно зарплатная)</label><select id="paymentsSource"></select></div><div class="actions"><button class="btn primary" onclick="fundPaymentsReserve()">Перевести недостающую сумму</button></div><p class="muted" style="font-size:12px">Рекомендуемый день — 17-е число, после поступления зарплаты и компенсации. Сумма рассчитывается автоматически с учётом остатка на резервной карте.</p></div>
+  <div class="card"><h2>Платежи месяца</h2><p class="muted">Отмечай платёж оплаченным только после фактического списания с резервной карты. Тогда сумма спишется с её баланса и попадёт в расходы.</p><div id="paymentsList"></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>Суммы тарифов и подписок</h3><p class="muted">Измени суммы, если стоимость услуг поменяется. Аренда берётся из планового бюджета в настройках.</p><div class="formgrid"><div class="field"><label>Интернет, ₽</label><input id="paymentInternet" type="number" min="0" step="1"></div><div class="field"><label>Т-Банк Pro, ₽</label><input id="paymentPro" type="number" min="0" step="1"></div><div class="field"><label>SIM-карта, ₽</label><input id="paymentSim" type="number" min="0" step="1"></div></div><div class="actions"><button class="btn" onclick="savePaymentConfig()">Сохранить суммы</button></div></div>
+ <div class="card" style="margin-top:14px"><h3>Как пользоваться</h3><ol class="muted"><li>17-го числа открой этот раздел.</li><li>Выбери карту, на которую пришли зарплата и компенсация.</li><li>Нажми «Перевести недостающую сумму».</li><li>Когда банк спишет аренду или подписку, нажми «Оплачено» напротив соответствующего платежа.</li></ol><p class="muted">Для начала создан отдельный учётный счёт «Резерв обязательных платежей». Если откроешь для этого реальную карту, переименуй этот счёт в разделе «Счета».</p></div>
+</section>
+
+<section class="view" id="goals">
+ <div class="grid two">
+  <div class="card"><div class="eyebrow">Главная цель — новые накопления</div><div class="big">1 000 000 ₽</div><p class="muted">Срок: 36 месяцев. Начальные активы не включаются.</p><div class="progress"><span id="goalBar2" style="width:0%"></span></div><div class="row"><span>Накоплено</span><b id="goalSaved2">0 ₽</b></div><div class="row"><span>Осталось</span><b id="goalLeft2">1 000 000 ₽</b></div></div>
+  <div class="card"><div class="eyebrow">Финансовая подушка</div><div class="big">200 000 ₽</div><p class="muted">Текущие собственные средства: 8 000 ₽.</p><div class="progress bluebar"><span id="reserveBar2" style="width:4%"></span></div><div class="row"><span>До цели</span><b id="reserveLeft2">192 000 ₽</b></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h2>Новые взносы в капитал</h2><p class="muted">Добавляй фактические взносы в цель. Они не создают деньги на банковских счетах автоматически — операция должна быть отражена отдельно, если деньги переместились между счетами.</p><button class="btn primary" onclick="openContributionModal()">Добавить взнос в цель</button><div id="contributionsList" style="margin-top:12px"></div></div>
+</section>
+
+<section class="view" id="investments">
+ <div class="grid two">
+  <div class="card"><div class="eyebrow">Текущая стоимость брокерского счёта</div><div class="big" id="brokerBalance">31 000 ₽</div><div class="muted">Текущая оценка, введённая вручную</div></div>
+  <div class="card"><div class="eyebrow">План пополнения</div><div class="big blue">2 000 ₽/мес.</div><div class="muted">План, а не автоматическое списание</div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h2>Обновить стоимость портфеля</h2><div class="formgrid"><div class="field"><label>Текущая стоимость, ₽</label><input id="brokerInput" type="number" min="0" step="0.01" value="31000"></div><div class="field"><label>Дата оценки</label><input id="brokerDate" type="date"></div></div><div class="actions"><button class="btn primary" onclick="saveBroker()">Сохранить оценку</button></div><p class="muted" style="font-size:12px">Для контроля цели учитываются только новые пополнения, а не изменение рыночной стоимости портфеля.</p></div>
+</section>
+
+<section class="view" id="business">
+ <div class="row" style="margin-bottom:12px"><h2>Учёт фотопечати</h2><button class="btn primary" onclick="openOrderModal()">Добавить заказ</button></div>
+ <div class="grid stats">
+  <div class="card"><div class="eyebrow">Выручка за всё время</div><div class="big" id="bizRevenue">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Себестоимость</div><div class="big orange" id="bizCost">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Прибыль по заказам</div><div class="big green" id="bizProfit">0 ₽</div></div>
+  <div class="card"><div class="eyebrow">Наличная касса</div><div class="big" id="bizCash">2 650 ₽</div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>Заказы</h3><div class="table-wrap"><table><thead><tr><th>Дата</th><th>Заказ</th><th>Выручка</th><th>Затраты</th><th>Прибыль</th><th></th></tr></thead><tbody id="ordersTable"></tbody></table></div><p class="muted">Начальная наличная касса 2 650 ₽ внесена как стартовый остаток. Не добавляй её повторно как выручку.</p></div>
+</section>
+
+<section class="view" id="credit">
+ <div class="grid stats">
+  <div class="card"><div class="eyebrow">Кредитная задолженность</div><div class="big orange" id="creditDebt">100 000 ₽</div></div>
+  <div class="card"><div class="eyebrow">Размещено на накопительном счёте</div><div class="big" id="creditPlaced">100 000 ₽</div></div>
+  <div class="card"><div class="eyebrow">Собственные деньги на накопительном счёте</div><div class="big green">8 000 ₽</div></div>
+  <div class="card"><div class="eyebrow">Процентный доход по схеме</div><div class="big" id="creditInterest">0 ₽</div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h2>Контроль кредитной схемы</h2><p class="muted">Схема отражается отдельно. Нельзя считать заёмные 100 000 ₽ доходом или собственным капиталом. Указывай фактический процентный доход и даты, а также контролируй срок погашения по условиям своего договора.</p><div class="formgrid"><div class="field"><label>Текущая задолженность, ₽</label><input id="creditDebtInput" type="number" value="100000" min="0"></div><div class="field"><label>Заёмные средства на накопительном счёте, ₽</label><input id="creditPlacedInput" type="number" value="100000" min="0"></div><div class="field"><label>Накопленный процентный доход, ₽</label><input id="creditInterestInput" type="number" value="0" min="0" step="0.01"></div><div class="field"><label>Ближайшая дата погашения</label><input id="creditDueInput" type="date"></div></div><div class="actions"><button class="btn primary" onclick="saveCredit()">Сохранить параметры</button></div><div class="divider"></div><div class="row"><span class="muted">Разница размещения и долга</span><b id="creditDifference">0 ₽</b></div><div class="row"><span class="muted">Дата следующего погашения</span><b id="creditDueLabel">Не указана</b></div></div>
+</section>
+
+<section class="view" id="settings">
+ <div class="grid two">
+  <div class="card"><h2>Плановый месячный бюджет</h2><div class="formgrid">
+   <div class="field"><label>Зарплата, ₽</label><input id="salarySetting" type="number" value="81000"></div>
+   <div class="field"><label>Компенсация, ₽</label><input id="compSetting" type="number" value="53000"></div>
+   <div class="field"><label>Аренда, ₽</label><input id="rentSetting" type="number" value="65000"></div>
+   <div class="field"><label>Повседневные расходы, ₽</label><input id="dailySetting" type="number" value="20000"></div>
+   <div class="field"><label>Интернет и подписки, ₽</label><input id="subsSetting" type="number" value="1248"></div>
+   <div class="field"><label>Взнос на семейный счёт, ₽</label><input id="familySetting" type="number" value="37500"></div>
+   <div class="field"><label>Инвестиции в месяц, ₽</label><input id="investSetting" type="number" value="2000"></div>
+  </div><div class="actions"><button class="btn primary" onclick="saveBudget()">Сохранить бюджет</button></div></div>
+  <div class="card"><h2>Резервное копирование</h2><p class="muted">Экспорт создаёт JSON-файл со счетами, операциями, целями и настройками. Храни копию отдельно от устройства.</p><div class="actions"><button class="btn primary" onclick="exportData()">Скачать резервную копию</button><button class="btn" onclick="document.getElementById('importFile').click()">Восстановить из копии</button></div><div class="divider"></div><h3>Сброс данных</h3><p class="muted">Удаляет все изменения в этом браузере и возвращает исходные данные.</p><button class="btn danger" onclick="resetData()">Сбросить к исходным данным</button></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h3>Важные ограничения первой версии</h3><ul class="muted"><li>Нет автоматического подключения к банкам: остатки и операции вносятся вручную.</li><li>Данные хранятся только в текущем браузере на текущем устройстве.</li><li>GitHub Pages не синхронизирует данные между устройствами.</li><li>Начальные балансы — снимок на дату запуска, а не история движения средств.</li></ul></div>
+</section>
+
+<footer>Личная финансовая система · Данные хранятся локально · Версия 1.1</footer>
+</div>
+
+<div class="modal-back" id="modalBack"><div class="modal"><div class="row"><h2 id="modalTitle">Добавить</h2><button class="btn" onclick="closeModal()">Закрыть</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const KEY='personalFinanceDashboard_v1';
+const rub=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(n)||0);
+const today=()=>new Date().toISOString().slice(0,10);
+const monthNow=()=>today().slice(0,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initial=()=>({
+ accounts:[
+  {id:'ya-card',name:'Яндекс Банк — карта',type:'Личный счёт',balance:6063,group:'personal'},
+  {id:'ya-save',name:'Яндекс Банк — накопительный',type:'Накопительный счёт',balance:108000,group:'personal'},
+  {id:'vtb',name:'ВТБ — зарплатная карта',type:'Личный счёт',balance:88008,group:'personal'},
+  {id:'tb-card',name:'Т-Банк — карта',type:'Личный счёт',balance:359,group:'personal'},
+  {id:'broker',name:'Т-Банк — брокерский счёт',type:'Инвестиции',balance:31000,group:'investment'},
+  {id:'alfa',name:'Альфа-Банк',type:'Личный счёт',balance:98,group:'personal'},
+  {id:'sber',name:'Сбербанк',type:'Личный счёт',balance:85,group:'personal'},
+  {id:'biz-cash',name:'Наличные фотопечати',type:'Бизнес-касса',balance:2650,group:'business'},
+  {id:'bill-reserve',name:'Резерв обязательных платежей',type:'Отдельная карта',balance:0,group:'personal'}
+ ],
+ paymentStatus:{},paymentConfig:{internet:900,pro:299,sim:49},
+ debt:100000,creditPlaced:100000,creditInterest:0,creditDue:'',
+ goalContributions:[],operations:[],orders:[],
+ budget:{salary:81000,comp:53000,rent:65000,daily:20000,subs:1248,family:37500,invest:2000},
+ reserveTarget:200000,mainGoal:1000000,brokerDate:''
+});
+let data=load();
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));const d=x?{...initial(),...x,budget:{...initial().budget,...x.budget}}:initial();if(!d.accounts.some(a=>a.id==='bill-reserve'))d.accounts.push({id:'bill-reserve',name:'Резерв обязательных платежей',type:'Отдельная карта',balance:0,group:'personal'});d.paymentStatus=d.paymentStatus||{};d.paymentConfig={...initial().paymentConfig,...d.paymentConfig};return d}catch(e){return initial()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function account(id){return data.accounts.find(a=>a.id===id)}
+function sumAssets(){return data.accounts.reduce((s,a)=>s+(Number(a.balance)||0),0)}
+function personalAssets(){return data.accounts.filter(a=>a.group!=='business').reduce((s,a)=>s+(Number(a.balance)||0),0)}
+function netWorth(){return sumAssets()-(Number(data.debt)||0)}
+function goalTotal(){return data.goalContributions.reduce((s,x)=>s+Number(x.amount||0),0)}
+function reserveOwn(){return Math.max(0,(Number(account('ya-save')?.balance)||0)-Math.min(Number(data.creditPlaced)||0,Number(data.debt)||0))}
+function planRemainder(){const b=data.budget;return b.salary+b.comp-b.rent-b.daily-b.subs-b.family-b.invest}
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===v));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view===v));}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+function render(){
+ const net=netWorth(), goal=goalTotal(), reserve=reserveOwn(), rem=planRemainder();
+ document.getElementById('netWorth').textContent=rub(net);
+ document.getElementById('netWorthNote').textContent=`Активы ${rub(sumAssets())} − долг ${rub(data.debt)}`;
+ document.getElementById('personalAssets').textContent=rub(personalAssets());
+ document.getElementById('debtTotal').textContent=rub(data.debt);
+ document.getElementById('goalProgress').textContent=rub(goal);
+ document.getElementById('goalProgressNote').textContent=`из ${rub(data.mainGoal)} новых накоплений`;
+ let gp=Math.min(100,goal/data.mainGoal*100);
+ ['goalBar','goalBar2'].forEach(id=>document.getElementById(id).style.width=gp+'%');
+ document.getElementById('goalPct').textContent=gp.toFixed(1).replace('.',',')+'%';
+ document.getElementById('goalRemaining').textContent=rub(Math.max(0,data.mainGoal-goal));
+ document.getElementById('goalSaved2').textContent=rub(goal);
+ document.getElementById('goalLeft2').textContent=rub(Math.max(0,data.mainGoal-goal));
+ document.getElementById('monthlyRemainder').textContent=rub(rem);
+ document.getElementById('budgetRemainder').textContent=rub(rem);
+ document.getElementById('reserveCurrent').textContent=rub(reserve);
+ let rp=Math.min(100,reserve/data.reserveTarget*100);
+ ['reserveBar','reserveBar2'].forEach(id=>document.getElementById(id).style.width=rp+'%');
+ document.getElementById('reserveRemaining').textContent=rub(Math.max(0,data.reserveTarget-reserve));
+ document.getElementById('reserveLeft2').textContent=rub(Math.max(0,data.reserveTarget-reserve));
+ document.getElementById('accountsTable').innerHTML=data.accounts.map(a=>`<tr><td>${esc(a.name)}</td><td><span class="pill">${esc(a.type)}</span></td><td>${rub(a.balance)}</td><td><button class="btn" onclick="editAccount('${a.id}')">Изменить</button></td></tr>`).join('');
+ document.getElementById('assetSummary').innerHTML=`<div class="item"><span>Все активы</span><b>${rub(sumAssets())}</b></div><div class="item"><span>Личные активы без бизнеса</span><b>${rub(personalAssets())}</b></div><div class="item"><span>Бизнес-касса</span><b>${rub(data.accounts.filter(a=>a.group==='business').reduce((s,a)=>s+a.balance,0))}</b></div><div class="item"><span>Долг</span><b class="orange">${rub(data.debt)}</b></div><div class="item"><span>Чистый капитал</span><b class="green">${rub(net)}</b></div>`;
+ const b=data.budget;
+ document.getElementById('budgetSummary').innerHTML=[['Аренда',b.rent],['Повседневные расходы',b.daily],['Интернет и подписки',b.subs],['Семейный счёт',b.family],['Инвестиции',b.invest]].map(x=>`<div class="item"><span>${x[0]}</span><b>${rub(x[1])}</b></div>`).join('');
+ renderOperations();renderOrders();renderCredit();renderPayments();
+ document.getElementById('brokerBalance').textContent=rub(account('broker')?.balance||0);
+ document.getElementById('brokerInput').value=account('broker')?.balance||0;
+ document.getElementById('brokerDate').value=data.brokerDate||today();
+ document.getElementById('contributionsList').innerHTML=data.goalContributions.length?data.goalContributions.slice().reverse().map(x=>`<div class="item"><span>${esc(x.date)}<small>${esc(x.note||'Взнос в цель')}</small></span><b class="green">+${rub(x.amount)}</b></div>`).join(''):'<div class="empty">Взносов пока нет. Начальные остатки не включаются в новые накопления.</div>';
+ document.getElementById('bizRevenue').textContent=rub(data.orders.reduce((s,x)=>s+x.revenue,0));
+ document.getElementById('bizCost').textContent=rub(data.orders.reduce((s,x)=>s+x.cost,0));
+ document.getElementById('bizProfit').textContent=rub(data.orders.reduce((s,x)=>s+x.revenue-x.cost,0));
+ document.getElementById('bizCash').textContent=rub(account('biz-cash')?.balance||0);
+}
+function renderOperations(){
+ const m=document.getElementById('monthFilter').value||monthNow();
+ const list=data.operations.filter(x=>x.date?.slice(0,7)===m);
+ const inc=list.filter(x=>x.kind==='income').reduce((s,x)=>s+x.amount,0);
+ const exp=list.filter(x=>x.kind==='expense').reduce((s,x)=>s+x.amount,0);
+ document.getElementById('monthIncome').textContent=rub(inc);document.getElementById('monthExpense').textContent=rub(exp);document.getElementById('monthNet').textContent=rub(inc-exp);document.getElementById('monthCount').textContent=list.length;
+ document.getElementById('operationsTable').innerHTML=list.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.title)}</td><td>${esc(x.category)}</td><td>${esc(account(x.accountId)?.name||'—')}</td><td class="${x.kind==='income'?'positive':x.kind==='expense'?'negative':''}">${x.kind==='income'?'+':x.kind==='expense'?'−':''}${rub(x.amount)}</td><td><button class="btn danger" onclick="deleteOperation('${x.id}')">×</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">За выбранный месяц операций нет.</td></tr>';
+ document.getElementById('recentOperations').innerHTML=data.operations.slice().reverse().slice(0,5).map(x=>`<div class="item"><span>${esc(x.title)}<small>${esc(x.date)} · ${esc(x.category)}</small></span><b class="${x.kind==='income'?'positive':'negative'}">${x.kind==='income'?'+':'−'}${rub(x.amount)}</b></div>`).join('')||'<div class="empty">Операции пока не добавлены.</div>';
+}
+function paymentItems(){const b=data.budget,c=data.paymentConfig||{internet:900,pro:299,sim:49};return [{id:'rent',title:'Аренда квартиры',date:'20-е число',amount:Number(b.rent)||0},{id:'internet',title:'Интернет',date:'27-е число',amount:Number(c.internet)||0},{id:'pro',title:'Т-Банк Pro',date:'28-е число',amount:Number(c.pro)||0},{id:'sim',title:'SIM-карта',date:'28-е число',amount:Number(c.sim)||0}]}
+function currentPaymentMonth(){return monthNow()}
+function renderPayments(){
+ const pc=data.paymentConfig||{internet:900,pro:299,sim:49};document.getElementById('paymentInternet').value=pc.internet;document.getElementById('paymentPro').value=pc.pro;document.getElementById('paymentSim').value=pc.sim;
+ const items=paymentItems(),target=items.reduce((s,x)=>s+x.amount,0),reserve=account('bill-reserve'),balance=Number(reserve?.balance)||0,need=Math.max(0,target-balance),month=currentPaymentMonth(),status=data.paymentStatus[month]||{};
+ document.getElementById('paymentsTarget').textContent=rub(target);document.getElementById('paymentsBalance').textContent=rub(balance);document.getElementById('paymentsToFund').textContent=rub(need);document.getElementById('paymentsBar').style.width=Math.min(100,target?balance/target*100:0)+'%';
+ const source=document.getElementById('paymentsSource'),old=source.value;source.innerHTML=data.accounts.filter(a=>a.id!=='bill-reserve'&&a.group!=='business').map(a=>`<option value="${a.id}">${esc(a.name)} — ${rub(a.balance)}</option>`).join('');if([...source.options].some(o=>o.value===old))source.value=old;else if([...source.options].some(o=>o.value==='vtb'))source.value='vtb';
+ document.getElementById('paymentsList').innerHTML=items.map(x=>{const paid=!!status[x.id];return `<div class="item"><div><b>${esc(x.title)}</b><small>${esc(x.date)} · ${rub(x.amount)}</small></div><div>${paid?'<span class="pill">Оплачено</span>':`<button class="btn" ${balance<x.amount?'disabled':''} onclick="markPaymentPaid('${x.id}')">Оплачено</button>`}</div></div>`}).join('');
+}
+function savePaymentConfig(){const internet=Number(document.getElementById('paymentInternet').value),pro=Number(document.getElementById('paymentPro').value),sim=Number(document.getElementById('paymentSim').value);if([internet,pro,sim].some(x=>!Number.isFinite(x)||x<0)){alert('Укажи корректные суммы, не меньше нуля.');return}data.paymentConfig={internet,pro,sim};save();alert('Суммы обязательных платежей сохранены.')}
+function fundPaymentsReserve(){const target=paymentItems().reduce((s,x)=>s+x.amount,0),reserve=account('bill-reserve'),amount=Math.max(0,target-(Number(reserve.balance)||0)),from=document.getElementById('paymentsSource').value;if(amount<=0){alert('На резервной карте уже достаточно денег для плановых платежей.');return}if(!account(from)||account(from).balance<amount){alert('На выбранной карте недостаточно средств для полного резерва. Выбери другой счёт или проверь остаток.');return}if(!confirm(`Перевести ${rub(amount)} на резервную карту?`))return;account(from).balance-=amount;reserve.balance+=amount;data.operations.push({id:crypto.randomUUID(),kind:'transfer',date:today(),title:'Пополнение резерва обязательных платежей',category:'Перевод между своими счетами',amount,accountId:from,targetId:'bill-reserve'});save();alert(`На резервную карту переведено ${rub(amount)}.`)}
+function markPaymentPaid(id){const item=paymentItems().find(x=>x.id===id);if(!item)return;const reserve=account('bill-reserve');if(reserve.balance<item.amount){alert('На резервной карте недостаточно средств. Сначала пополни резерв.');return}const month=currentPaymentMonth();data.paymentStatus[month]=data.paymentStatus[month]||{};if(data.paymentStatus[month][id])return;if(!confirm(`Подтвердить фактическую оплату «${item.title}» на ${rub(item.amount)}?`))return;reserve.balance-=item.amount;data.paymentStatus[month][id]=true;data.operations.push({id:crypto.randomUUID(),kind:'expense',date:today(),title:item.title,category:'Обязательные платежи',amount:item.amount,accountId:'bill-reserve',targetId:null});save()}
+function renderOrders(){document.getElementById('ordersTable').innerHTML=data.orders.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.title)}</td><td>${rub(x.revenue)}</td><td>${rub(x.cost)}</td><td class="green">${rub(x.revenue-x.cost)}</td><td><button class="btn danger" onclick="deleteOrder('${x.id}')">×</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Заказов пока нет.</td></tr>'}
+function renderCredit(){
+ document.getElementById('creditDebt').textContent=rub(data.debt);document.getElementById('creditPlaced').textContent=rub(data.creditPlaced);document.getElementById('creditInterest').textContent=rub(data.creditInterest);
+ document.getElementById('creditDebtInput').value=data.debt;document.getElementById('creditPlacedInput').value=data.creditPlaced;document.getElementById('creditInterestInput').value=data.creditInterest;document.getElementById('creditDueInput').value=data.creditDue||'';
+ document.getElementById('creditDifference').textContent=rub(data.creditPlaced-data.debt);document.getElementById('creditDueLabel').textContent=data.creditDue||'Не указана';
+}
+document.getElementById('monthFilter').value=monthNow();document.getElementById('monthFilter').addEventListener('change',renderOperations);
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalBack').classList.add('open')}
+function closeModal(){document.getElementById('modalBack').classList.remove('open')}
+function openOperationModal(){
+ const opts=data.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+ openModal('Новая операция',`<div class="formgrid">
+ <div class="field"><label>Тип операции</label><select id="opKind"><option value="expense">Расход</option><option value="income">Доход</option><option value="transfer">Перевод между своими счетами</option></select></div>
+ <div class="field"><label>Дата</label><input id="opDate" type="date" value="${today()}"></div>
+ <div class="field"><label>Название</label><input id="opTitle" placeholder="Например, продукты"></div>
+ <div class="field"><label>Категория</label><input id="opCategory" placeholder="Например, питание"></div>
+ <div class="field"><label>Сумма, ₽</label><input id="opAmount" type="number" min="0.01" step="0.01"></div>
+ <div class="field"><label>Счёт</label><select id="opAccount">${opts}</select></div>
+ <div class="field full" id="transferTargetWrap" style="display:none"><label>На какой счёт перевести</label><select id="opTarget">${opts}</select></div>
+ </div><div class="actions"><button class="btn primary" onclick="addOperation()">Сохранить операцию</button></div>`);
+ document.getElementById('opKind').addEventListener('change',e=>document.getElementById('transferTargetWrap').style.display=e.target.value==='transfer'?'flex':'none');
+}
+function addOperation(){
+ const kind=document.getElementById('opKind').value,amount=Number(document.getElementById('opAmount').value),from=document.getElementById('opAccount').value,to=document.getElementById('opTarget')?.value;
+ if(!amount||amount<=0||!document.getElementById('opTitle').value){alert('Заполни название и корректную сумму.');return}
+ if(kind==='transfer'&&from===to){alert('Выбери разные счета.');return}
+ if(kind==='transfer'){
+  if(account(from).balance<amount){alert('На исходном счёте недостаточно средств.');return}
+  account(from).balance-=amount;account(to).balance+=amount;
+ }else if(kind==='expense'){account(from).balance-=amount}else{account(from).balance+=amount}
+ data.operations.push({id:crypto.randomUUID(),kind,date:document.getElementById('opDate').value,title:document.getElementById('opTitle').value,category:document.getElementById('opCategory').value||'Без категории',amount,accountId:from,targetId:kind==='transfer'?to:null});
+ closeModal();save();
+}
+function deleteOperation(id){if(!confirm('Удалить операцию? Баланс счёта автоматически не изменится.'))return;data.operations=data.operations.filter(x=>x.id!==id);save()}
+function openAccountModal(){openModal('Добавить счёт',`<div class="formgrid"><div class="field"><label>Название</label><input id="newAccName"></div><div class="field"><label>Тип</label><input id="newAccType" value="Личный счёт"></div><div class="field"><label>Баланс, ₽</label><input id="newAccBalance" type="number" value="0"></div><div class="field"><label>Категория</label><select id="newAccGroup"><option value="personal">Личный</option><option value="investment">Инвестиции</option><option value="business">Бизнес</option></select></div></div><div class="actions"><button class="btn primary" onclick="addAccount()">Добавить</button></div>`)}
+function addAccount(){const name=document.getElementById('newAccName').value;if(!name)return alert('Укажи название счёта');data.accounts.push({id:crypto.randomUUID(),name,type:document.getElementById('newAccType').value,balance:Number(document.getElementById('newAccBalance').value)||0,group:document.getElementById('newAccGroup').value});closeModal();save()}
+function editAccount(id){const a=account(id);openModal('Изменить счёт',`<div class="formgrid"><div class="field full"><label>Название</label><input id="editAccName" value="${esc(a.name)}"></div><div class="field"><label>Баланс, ₽</label><input id="editAccBalance" type="number" step=".01" value="${a.balance}"></div><div class="field"><label>Категория</label><select id="editAccGroup"><option value="personal">Личный</option><option value="investment">Инвестиции</option><option value="business">Бизнес</option></select></div></div><div class="actions"><button class="btn primary" onclick="saveAccount('${id}')">Сохранить</button></div>`);document.getElementById('editAccGroup').value=a.group}
+function saveAccount(id){let a=account(id);a.name=document.getElementById('editAccName').value;a.balance=Number(document.getElementById('editAccBalance').value)||0;a.group=document.getElementById('editAccGroup').value;closeModal();save()}
+function openContributionModal(){openModal('Взнос в цель «1 000 000 ₽»',`<div class="formgrid"><div class="field"><label>Дата</label><input id="conDate" type="date" value="${today()}"></div><div class="field"><label>Сумма, ₽</label><input id="conAmount" type="number" min="1"></div><div class="field full"><label>Комментарий / источник</label><input id="conNote" placeholder="Например, часть прибыли фотопечати"></div></div><div class="actions"><button class="btn primary" onclick="addContribution()">Добавить взнос</button></div>`)}
+function addContribution(){let amount=Number(document.getElementById('conAmount').value);if(!amount||amount<=0)return alert('Укажи сумму');data.goalContributions.push({id:crypto.randomUUID(),date:document.getElementById('conDate').value,amount,note:document.getElementById('conNote').value});closeModal();save()}
+function openOrderModal(){openModal('Новый заказ фотопечати',`<div class="formgrid"><div class="field"><label>Дата</label><input id="ordDate" type="date" value="${today()}"></div><div class="field"><label>Заказ</label><input id="ordTitle" placeholder="Например, 10×15 — 20 шт."></div><div class="field"><label>Выручка, ₽</label><input id="ordRevenue" type="number" min="0" step=".01"></div><div class="field"><label>Себестоимость, ₽</label><input id="ordCost" type="number" min="0" step=".01"></div></div><div class="actions"><button class="btn primary" onclick="addOrder()">Сохранить заказ</button></div>`)}
+function addOrder(){let revenue=Number(document.getElementById('ordRevenue').value),cost=Number(document.getElementById('ordCost').value);if(!document.getElementById('ordTitle').value||revenue<0||cost<0||!Number.isFinite(revenue)||!Number.isFinite(cost))return alert('Проверь название и суммы');data.orders.push({id:crypto.randomUUID(),date:document.getElementById('ordDate').value,title:document.getElementById('ordTitle').value,revenue,cost});closeModal();save()}
+function deleteOrder(id){if(!confirm('Удалить заказ из учёта?'))return;data.orders=data.orders.filter(x=>x.id!==id);save()}
+function saveBroker(){let a=account('broker');a.balance=Number(document.getElementById('brokerInput').value)||0;data.brokerDate=document.getElementById('brokerDate').value;save();alert('Оценка брокерского счёта сохранена.')}
+function saveCredit(){data.debt=Number(document.getElementById('creditDebtInput').value)||0;data.creditPlaced=Number(document.getElementById('creditPlacedInput').value)||0;data.creditInterest=Number(document.getElementById('creditInterestInput').value)||0;data.creditDue=document.getElementById('creditDueInput').value;save()}
+function saveBudget(){data.budget={salary:Number(salarySetting.value),comp:Number(compSetting.value),rent:Number(rentSetting.value),daily:Number(dailySetting.value),subs:Number(subsSetting.value),family:Number(familySetting.value),invest:Number(investSetting.value)};save();alert('Бюджет сохранён.')}
+function populateSettings(){const b=data.budget;salarySetting.value=b.salary;compSetting.value=b.comp;rentSetting.value=b.rent;dailySetting.value=b.daily;subsSetting.value=b.subs;familySetting.value=b.family;investSetting.value=b.invest}
+function exportData(){const blob=new Blob([JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(file){const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.accounts||!x.budget)throw Error();data={...initial(),...x,budget:{...initial().budget,...x.budget}};if(!data.accounts.some(a=>a.id==='bill-reserve'))data.accounts.push({id:'bill-reserve',name:'Резерв обязательных платежей',type:'Отдельная карта',balance:0,group:'personal'});data.paymentStatus=data.paymentStatus||{};data.paymentConfig={...initial().paymentConfig,...data.paymentConfig};save();populateSettings();alert('Резервная копия восстановлена.')}catch(e){alert('Не удалось прочитать файл резервной копии.')}};r.readAsText(file)}
+function resetData(){if(!confirm('Все изменения в этом браузере будут удалены. Продолжить?'))return;data=initial();save();populateSettings();alert('Исходные данные восстановлены.')}
+document.getElementById('exportBtn').onclick=exportData;document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();document.getElementById('importFile').onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''};
+function renderAll(){populateSettings();render()}
+renderAll();
+</script>
+</body>
+</html>
